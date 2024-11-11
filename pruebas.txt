@@ -1,0 +1,84 @@
+import java.io.*;
+import java.util.*;
+
+public class MatrizMensajes {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        // Crear el archivo para la salida
+        try (PrintWriter writer = new PrintWriter(new File("resultado.txt"))) {
+            int numCasos = Integer.parseInt(scanner.nextLine());
+
+            for (int caso = 0; caso < numCasos; caso++) {
+
+                String[] primeraLinea = scanner.nextLine().split(" ");
+                int n = Integer.parseInt(primeraLinea[0]);
+                int d = Integer.parseInt(primeraLinea[1]);
+
+                List<Celula> celulas = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    String[] datosCelula = scanner.nextLine().split(" ");
+                    int id = Integer.parseInt(datosCelula[0]);
+                    int x = Integer.parseInt(datosCelula[1]);
+                    int y = Integer.parseInt(datosCelula[2]);
+                    int tipo = Integer.parseInt(datosCelula[3]);
+                    List<String> peptidos = new ArrayList<>();
+                    for (int j = 4; j < datosCelula.length; j++) {
+                        peptidos.add(datosCelula[j]);
+                    }
+                    celulas.add(new Celula(id, x, y, tipo, peptidos));
+                }
+
+                int[][] matrizMensajes = new int[n + 2][n + 2];
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        if (i != j) {
+                            Celula c1 = celulas.get(i);
+                            Celula c2 = celulas.get(j);
+                            if (c1.tipo == 1) {
+                                matrizMensajes[0][c1.id] = Integer.MAX_VALUE;
+                            }
+                            if (c1.tipo == 3) {
+                                matrizMensajes[c1.id][n + 1] = Integer.MAX_VALUE;
+                            }
+
+                            if ((c1.tipo != 3 && c2.tipo != 1)) {
+                                if ((c1.tipo == 1 && c2.tipo == 2) || c1.tipo == 2) {
+                                    double distancia = c1.distancia(c2);
+                                    if (distancia <= d) {
+                                        List<String> peptidosC1 = c1.peptidos;
+                                        List<String> peptidosC2 = c2.peptidos;
+                                        int peptidosComunes = Celula.contarPeptidosComunes(peptidosC1, peptidosC2);
+                                        matrizMensajes[c1.id][c2.id] = peptidosComunes;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Escribir en el archivo el caso actual
+                writer.println("Caso #" + (caso + 1));
+
+                // Imprimir la matriz de mensajes en el archivo
+                for (int i = 0; i < n + 2; i++) {
+                    for (int j = 0; j < n + 2; j++) {
+                        writer.print(matrizMensajes[i][j] + " ");
+                    }
+                    writer.println();
+                }
+
+                // flujo sin cada nodo
+                int flujoMaximo = edmondsKarp(matrizMensajes, 0, n + 1);
+                int[] respuesta = menorFlujoMaximo(matrizMensajes, 0, n + 1, celulas);
+                
+                // Escribir el resultado final en el archivo
+                writer.println(respuesta[0] + " " + flujoMaximo + " " + respuesta[1]);
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("Error al crear el archivo de salida: " + e.getMessage());
+        }
+
+        scanner.close();
+    }
+}
