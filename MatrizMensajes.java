@@ -12,9 +12,9 @@ class Celula {
     int x;
     int y;
     int tipo;
-    List<String> peptidos;
+    HashSet<String> peptidos;
 
-    public Celula(int id, int x, int y, int tipo, List<String> peptidos) {
+    public Celula(int id, int x, int y, int tipo, HashSet<String> peptidos) {
         this.id = id;
         this.x = x;
         this.y = y;
@@ -26,16 +26,25 @@ class Celula {
         return Math.sqrt(Math.pow(this.x - otra.x, 2) + Math.pow(this.y - otra.y, 2));
     }
 
-    public static int contarPeptidosComunes(List<String> peptidosC1, List<String> peptidosC2) {
-        // Convertir listas a conjuntos
-        Set<String> setC1 = new HashSet<>(peptidosC1);
-        Set<String> setC2 = new HashSet<>(peptidosC2);
-
-        setC1.retainAll(setC2); 
-
-        
-        return setC1.size();
+    public static int contarPeptidosComunes(HashSet<String> peptidosC1, HashSet<String> peptidosC2) {
+        // Aseguramos que siempre iteremos sobre el conjunto más pequeño
+        if (peptidosC1.size() > peptidosC2.size()) {
+            return contarInterseccion(peptidosC2, peptidosC1);
+        } else {
+            return contarInterseccion(peptidosC1, peptidosC2);
+        }
     }
+    
+    private static int contarInterseccion(HashSet<String> pequeño, HashSet<String> grande) {
+        int contador = 0;
+        for (String peptido : pequeño) {
+            if (grande.contains(peptido)) {
+                contador++;
+            }
+        }
+        return contador;
+    }
+    
 }
 
 public class MatrizMensajes {
@@ -45,6 +54,7 @@ public class MatrizMensajes {
         int numCasos = Integer.parseInt(scanner.nextLine());
 
         for (int caso = 0; caso < numCasos; caso++) {
+            long time = System.currentTimeMillis(); // Inicializar el tiempo de ejecución
 
             String[] primeraLinea = scanner.nextLine().split(" ");
             int n = Integer.parseInt(primeraLinea[0]);
@@ -57,47 +67,67 @@ public class MatrizMensajes {
                 int x = Integer.parseInt(datosCelula[1]);
                 int y = Integer.parseInt(datosCelula[2]);
                 int tipo = Integer.parseInt(datosCelula[3]);
-                List<String> peptidos = new ArrayList<>();
+                HashSet<String> peptidos = new HashSet<>();
                 for (int j = 4; j < datosCelula.length; j++) {
                     peptidos.add(datosCelula[j]);
                 }
                 celulas.add(new Celula(id, x, y, tipo, peptidos));
             }
-
             int[][] matrizMensajes = new int[n + 2][n + 2];
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    if (i != j) {
-                        Celula c1 = celulas.get(i);
-                        Celula c2 = celulas.get(j);
-                        if (c1.tipo == 1) {
-                            matrizMensajes[0][c1.id] = Integer.MAX_VALUE;
-                        }
-                        if (c1.tipo == 3) {
-                            matrizMensajes[c1.id][n + 1] = Integer.MAX_VALUE;
-                        }
 
-                        if ((c1.tipo != 3 && c2.tipo != 1)) {
-                            if ((c1.tipo == 1 && c2.tipo == 2) || c1.tipo == 2) {
-                                double distancia = c1.distancia(c2);
-                                if (distancia <= d) {
-                                    List<String> peptidosC1 = c1.peptidos;
-                                    List<String> peptidosC2 = c2.peptidos;
-                                    int peptidosComunes = Celula.contarPeptidosComunes(peptidosC1, peptidosC2);
-                                    matrizMensajes[c1.id][c2.id] = peptidosComunes;
-                                }
+            // Configuramos los valores extremos de las células de tipo iniciadora y ejecutora una vez
+            for (Celula c : celulas) {
+                if (c.tipo == 1) {
+                    matrizMensajes[0][c.id] = Integer.MAX_VALUE;
+                }
+                if (c.tipo == 3) {
+                    matrizMensajes[c.id][n + 1] = Integer.MAX_VALUE;
+                }
+            }
+            
+            // Evitamos duplicados iterando sobre combinaciones únicas (j > i)
+            for (int i = 0; i < n; i++) {
+                Celula c1 = celulas.get(i);
+                for (int j = i + 1; j < n; j++) {
+                    Celula c2 = celulas.get(j);
+                    if((c1.tipo == 3 && c2.tipo == 2) || (c1.tipo == 2 && c2.tipo == 1) ) {
+                        double distancia = c1.distancia(c2);
+                        if (distancia <= d) {
+                            HashSet<String> peptidosC1 = c1.peptidos;
+                            HashSet<String> peptidosC2 = c2.peptidos;
+            
+                            int peptidosComunes = Celula.contarPeptidosComunes(peptidosC1, peptidosC2);                
+                            matrizMensajes[c2.id][c1.id] = peptidosComunes;                    
+                        }
+                    }
+
+                    if ((c1.tipo != 3 && c2.tipo != 1) && ((c1.tipo == 1 && c2.tipo == 2) || c1.tipo == 2)) {
+                        double distancia = c1.distancia(c2);
+                        if (distancia <= d) {
+                            HashSet<String> peptidosC1 = c1.peptidos;
+                            HashSet<String> peptidosC2 = c2.peptidos;
+            
+                            int peptidosComunes = Celula.contarPeptidosComunes(peptidosC1, peptidosC2);
+                            
+                            matrizMensajes[c1.id][c2.id] = peptidosComunes;
+            
+                            if (c1.tipo == 2 && c2.tipo == 2) {
+                                matrizMensajes[c2.id][c1.id] = peptidosComunes;
                             }
                         }
                     }
                 }
             }
+                
 
             // Calcular el flujo máximo y la respuesta
             int flujoMaximo = edmondsKarp(matrizMensajes, 0, n + 1);
             int[] respuesta = menorFlujoMaximo(matrizMensajes, 0, n + 1, celulas);
             
             // Imprimir solo el resultado final para este caso
+            long timeEjecucion = System.currentTimeMillis() - time;
             System.out.println(respuesta[0] + " " + flujoMaximo + " " + respuesta[1]);
+            System.out.println("Tiempo de ejecución: " + timeEjecucion + " ms");
         }
 
         scanner.close();
