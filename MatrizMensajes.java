@@ -123,10 +123,10 @@ public class MatrizMensajes {
             // Calcular el flujo máximo y la respuesta
             long time = System.currentTimeMillis();
             int flujoMaximo = edmondsKarp(matrizMensajes, 0, n + 1);
+            long timeEjecucion = System.currentTimeMillis() - time;
             int[] respuesta = menorFlujoMaximo(matrizMensajes, 0, n + 1, celulas);
             
             // Imprimir solo el resultado final para este caso
-            long timeEjecucion = System.currentTimeMillis() - time;
             System.out.println(respuesta[0] + " " + flujoMaximo + " " + respuesta[1]);
             System.out.println("Tiempo de ejecución: " + timeEjecucion + " ms");
         }

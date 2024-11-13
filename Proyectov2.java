@@ -132,7 +132,7 @@ public class Proyectov2 {
     
     public static Map<Integer, List<Tupla>> copiarGrafo(Map<Integer, List<Tupla>> grafo) {
         Map<Integer, List<Tupla>> copia = new HashMap<>();
-
+        
         for (Map.Entry<Integer, List<Tupla>> entry : grafo.entrySet()) {
             List<Tupla> copiaVecinos = new ArrayList<>();
             for (Tupla t : entry.getValue()) {
