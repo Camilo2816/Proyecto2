@@ -54,7 +54,7 @@ public class MatrizMensajes {
         int numCasos = Integer.parseInt(scanner.nextLine());
 
         for (int caso = 0; caso < numCasos; caso++) {
-            long time = System.currentTimeMillis(); // Inicializar el tiempo de ejecución
+             // Inicializar el tiempo de ejecución
 
             String[] primeraLinea = scanner.nextLine().split(" ");
             int n = Integer.parseInt(primeraLinea[0]);
@@ -119,8 +119,9 @@ public class MatrizMensajes {
                 }
             }
                 
-
+            System.out.println("Fin de la creación de la matriz de mensajes");
             // Calcular el flujo máximo y la respuesta
+            long time = System.currentTimeMillis();
             int flujoMaximo = edmondsKarp(matrizMensajes, 0, n + 1);
             int[] respuesta = menorFlujoMaximo(matrizMensajes, 0, n + 1, celulas);
             
